@@ -8,7 +8,7 @@ Layout (accepted C version, no logo on publish frames):
   - ending: title + formula lines at equal size
 
 Requires: pip install pillow
-macOS fonts: STHeiti Medium, Avenir Next (system)
+Fonts: STHeiti Medium (macOS), else Noto Sans CJK Bold/Regular (Linux)
 
 Examples:
   python3 make_cover.py cover 显性唯一
@@ -34,7 +34,12 @@ W, H = 1296, 2304
 BG_SCALE = 1.75
 BG_FOCUS_Y = 0.52
 
-TITLE_FONT = "/System/Library/Fonts/STHeiti Medium.ttc"
+# Prefer macOS STHeiti; fall back to Noto Sans CJK on Linux.
+_TITLE_FONT_CANDIDATES = (
+    "/System/Library/Fonts/STHeiti Medium.ttc",
+    "/usr/share/fonts/opentype/noto/NotoSansCJK-Bold.ttc",
+    "/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc",
+)
 TITLE_SIZE_COVER = 210
 TITLE_SIZE_ENDING = 150
 TITLE_Y_COVER = 620
@@ -54,6 +59,18 @@ FORMULA_GAP = 200
 
 FILL = (255, 255, 255, 255)
 STROKE_FILL = (59, 130, 246, 255)
+
+
+def resolve_title_font() -> str:
+    for path in _TITLE_FONT_CANDIDATES:
+        if Path(path).is_file():
+            return path
+    raise SystemExit(
+        "no CJK title font found; tried:\n  " + "\n  ".join(_TITLE_FONT_CANDIDATES)
+    )
+
+
+TITLE_FONT = resolve_title_font()
 
 
 def load_background() -> Image.Image:
