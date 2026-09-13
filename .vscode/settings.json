@@ -1,0 +1,8 @@
+{
+    "chat.tools.terminal.autoApprove": {
+        "/^python3 make_cover\\.py ending 区块排除 --section-titles 宫对行 行对宫 --lines '宫内数字排成线' '线外同数全删掉' '线内数字挤一宫' '宫内别处删同数' && file \\.\\./video/covers/区块排除-结尾\\.png$/": {
+            "approve": true,
+            "matchCommandLine": true
+        }
+    }
+}

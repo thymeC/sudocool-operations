@@ -56,6 +56,10 @@ FORMULA_SIZE = 84
 FORMULA_STROKE = 4
 FORMULA_START_Y = 860
 FORMULA_GAP = 200
+SECTION_TITLE_SIZE = 62
+SECTION_TITLE_STROKE = 4
+SECTION_TITLE_GAP = 120
+SECTION_GAP = 100
 
 FILL = (255, 255, 255, 255)
 STROKE_FILL = (59, 130, 246, 255)
@@ -119,19 +123,36 @@ def render_cover(title: str, tier: str = DEFAULT_TIER) -> Image.Image:
     return canvas.convert("RGB")
 
 
-def render_ending(title: str, lines: list[str]) -> Image.Image:
+def formula_font_for(lines: list[str]) -> ImageFont.FreeTypeFont:
+    usable_width = W - 96
+    for size in range(FORMULA_SIZE, 39, -1):
+        font = ImageFont.truetype(TITLE_FONT, size, index=0)
+        if all(font.getlength(line) <= usable_width for line in lines):
+            return font
+    return ImageFont.truetype(TITLE_FONT, 40, index=0)
+
+
+def render_ending(
+    title: str, lines: list[str], section_titles: list[str] | None = None
+) -> Image.Image:
     canvas = load_background()
     draw = ImageDraw.Draw(canvas)
     title_font = ImageFont.truetype(TITLE_FONT, TITLE_SIZE_ENDING, index=0)
     center_text(draw, title, title_font, TITLE_Y_ENDING, TITLE_STROKE_ENDING)
-    formula_font = ImageFont.truetype(TITLE_FONT, FORMULA_SIZE, index=0)
+    formula_lines = [line.strip() for line in lines if line.strip()]
+    formula_font = formula_font_for(formula_lines)
+    section_font = ImageFont.truetype(TITLE_FONT, SECTION_TITLE_SIZE, index=0)
     y = FORMULA_START_Y
-    for line in lines:
-        line = line.strip()
-        if not line:
-            continue
+    for index, line in enumerate(formula_lines):
+        if section_titles and index % 2 == 0:
+            section_title = section_titles[index // 2].strip()
+            if section_title:
+                center_text(draw, section_title, section_font, y, SECTION_TITLE_STROKE)
+                y += SECTION_TITLE_GAP
         center_text(draw, line, formula_font, y, FORMULA_STROKE)
         y += FORMULA_GAP
+        if section_titles and index % 2 == 1:
+            y += SECTION_GAP
     return canvas.convert("RGB")
 
 
@@ -156,6 +177,11 @@ def main() -> None:
         required=True,
         help="Formula lines, same font size each",
     )
+    ending.add_argument(
+        "--section-titles",
+        nargs="+",
+        help="Optional headings for each two-line formula group",
+    )
     ending.add_argument("-o", "--output", type=Path, help="PNG path")
 
     args = parser.parse_args()
@@ -169,8 +195,10 @@ def main() -> None:
         out = args.output or (COVERS / f"{title}.png")
         render_cover(title, args.tier).save(out, "PNG")
     else:
+        if args.section_titles and len(args.section_titles) * 2 != len(args.lines):
+            raise SystemExit("section titles require exactly two formula lines each")
         out = args.output or (COVERS / f"{title}-结尾.png")
-        render_ending(title, args.lines).save(out, "PNG")
+        render_ending(title, args.lines, args.section_titles).save(out, "PNG")
 
     print(out)
 
