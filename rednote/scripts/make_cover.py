@@ -64,6 +64,9 @@ SECTION_GAP = 100
 FILL = (255, 255, 255, 255)
 STROKE_FILL = (59, 130, 246, 255)
 
+# Pillow >= 9.1 ships the Resampling enum; older versions keep constants on Image.
+RESAMPLE = getattr(Image, "Resampling", Image)
+
 
 def resolve_title_font() -> str:
     for path in _TITLE_FONT_CANDIDATES:
@@ -81,13 +84,13 @@ def load_background() -> Image.Image:
     if not BG.is_file():
         raise SystemExit(f"missing background: {BG}")
     src = Image.open(BG).convert("RGBA")
-    base = src.resize((W, H), Image.Resampling.LANCZOS)
+    base = src.resize((W, H), RESAMPLE.LANCZOS)
     cw, ch = int(W / BG_SCALE), int(H / BG_SCALE)
     cx, cy = W // 2, int(H * BG_FOCUS_Y)
     left = max(0, min(W - cw, cx - cw // 2))
     top = max(0, min(H - ch, cy - ch // 2))
     return base.crop((left, top, left + cw, top + ch)).resize(
-        (W, H), Image.Resampling.LANCZOS
+        (W, H), RESAMPLE.LANCZOS
     )
 
 
